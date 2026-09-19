@@ -3,6 +3,18 @@
 #include <sstream>
 using namespace sf;
 
+// Function declaration
+void updateBranches(int seed);
+
+const int NUM_BRANCHES = 6;
+Sprite branches[NUM_BRANCHES];
+
+// Where is the player/branch
+// Left or Right
+enum class side { LEFT, RIGHT, NONE};
+
+side branchPositions[NUM_BRANCHES];
+
 // this is where our game starts from
 int main()
 {
@@ -85,7 +97,25 @@ int main()
 
 	messageText.setPosition(1920 / 2.0f, 1080 / 2.0f);
 	scoreText.setPosition(20, 20);
+
+	// Prepare 5 branches
+	Texture textureBranch;
+	textureBranch.loadFromFile("graphics/branch.png");
+	// Set the texture for each branch sprite
+	for (int i = 0; i < NUM_BRANCHES; i++) {
+		branches[i].setTexture(textureBranch);
+		branches[i].setPosition(-2000, -2000);
+
+		// Set the sprite's origin to dead center
+		branches[i].setOrigin(220, 20);
+	}
 	
+
+	updateBranches(1);
+	updateBranches(2);
+	updateBranches(3);
+	updateBranches(4);
+	updateBranches(5);
 
 
 	while (window.isOpen()) {
@@ -232,6 +262,30 @@ int main()
 			ss << "Score = " << score;
 			scoreText.setString(ss.str());
 
+			// Update branch sprites
+			for (int i = 0; i < NUM_BRANCHES; i++) {
+
+				float height = i * 150;
+
+				if (branchPositions[i] == side::LEFT) {
+					// Move the sprite to the left side
+					branches[i].setPosition(610, height);
+
+					// Flip the sprite round the other way
+					branches[i].setRotation(180);
+
+				}
+				else if (branchPositions[i] == side::RIGHT) {
+					// Move sprite to the right side
+					branches[i].setPosition(1330, height);
+					branches[i].setRotation(0);
+				}
+				else {
+					// Hide the branch
+					branches[i].setPosition(3000, height);
+				}
+			}
+
 
 		} // End if (!paused)
 
@@ -248,6 +302,11 @@ int main()
 		window.draw(spriteCloud1);
 		window.draw(spriteCloud2);
 		window.draw(spriteCloud3);
+
+		// Draw Branches
+		for (int i = 0; i < NUM_BRANCHES; i++) {
+			window.draw(branches[i]);
+		}
 
 		// Draw Tree
 		window.draw(spriteTree);
@@ -274,4 +333,29 @@ int main()
 	
 
 	return 0;
+}
+
+// Function definition
+void updateBranches(int seed) {
+	// Move all the branches down one place
+	for (int j = NUM_BRANCHES - 1; j > 0; j--) {
+		branchPositions[j] = branchPositions[j - 1];
+	}
+
+	// Spawn a new branch at position 0
+	srand((int)time(0) + seed);
+	int r = (rand() % 5);
+
+	switch (r) {
+	case 0:
+		branchPositions[0] = side::LEFT;
+		break;
+
+	case 1:
+		branchPositions[0] = side::RIGHT;
+		break;
+	default:
+		branchPositions[0] = side::NONE;
+		break;
+	}
 }
