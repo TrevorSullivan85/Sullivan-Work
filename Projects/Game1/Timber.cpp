@@ -11,10 +11,11 @@ const int NUM_BRANCHES = 6;
 Sprite branches[NUM_BRANCHES];
 
 // Where is the player/branch
-// Left or Right
-enum class side { LEFT, RIGHT, NONE};
+// Top or Bottom
+enum class side { TOP, BOTTOM, NONE};
 
 side branchPositions[NUM_BRANCHES];
+float branchXPositions[NUM_BRANCHES];
 
 // this is where our game starts from
 int main()
@@ -35,7 +36,11 @@ int main()
 	textureTree.loadFromFile("graphics/tree.png");
 	Sprite spriteTree;
 	spriteTree.setTexture(textureTree);
-	spriteTree.setPosition(810, 0);
+	spriteTree.setOrigin(spriteTree.getLocalBounds().width / 2, spriteTree.getLocalBounds().height / 2);
+	spriteTree.setPosition(1920 / 2, 1080 / 2);
+	spriteTree.setRotation(90);
+	spriteTree.setScale(1, 3);
+
 
 	// Making the bee
 	Texture textureBee;
@@ -49,11 +54,11 @@ int main()
 	// Making 3 clouds
 
 	const int NUM_CLOUDS = 3;
-	Sprite clouds[3];
+	Sprite clouds[NUM_CLOUDS];
 	Texture textureCloud;
 	textureCloud.loadFromFile("graphics/cloud.png");
-	bool cloudsActive[3];
-	float cloudsSpeeds[3];
+	bool cloudsActive[NUM_CLOUDS];
+	float cloudsSpeeds[NUM_CLOUDS];
 
 	for (int i = 0; i < NUM_CLOUDS; i++) {
 		clouds[i].setTexture(textureCloud);
@@ -63,17 +68,6 @@ int main()
 	}
 
 
-
-	//Sprite spriteCloud1, spriteCloud2, spriteCloud3;
-	//spriteCloud1.setTexture(textureCloud);
-	//spriteCloud2.setTexture(textureCloud);
-	//spriteCloud3.setTexture(textureCloud);
-	//// Set Positions
-	//spriteCloud1.setPosition(0, 0);
-	//spriteCloud2.setPosition(0, 250);
-	//spriteCloud3.setPosition(0, 500);
-	//bool cloud1Active = false, cloud2Active = false, cloud3Active = false;
-	//float cloud1Speed = 0.0f, cloud2Speed = 0.0f, cloud3Speed = 0.0f;
 
 	// Clock
 	Clock clock;
@@ -124,6 +118,9 @@ int main()
 
 		// Set the sprite's origin to dead center
 		branches[i].setOrigin(220, 20);
+
+		// Rotate branch for horizontal game
+		branches[i].setRotation(90);
 	}
 
 	// Prepare the player
@@ -134,7 +131,7 @@ int main()
 	spritePlayer.setPosition(580, 720);
 
 	// The player starts on the Left
-	side playerSide = side::LEFT;
+	side playerSide = side::TOP;
 
 	// Prepare the gravestone
 	Texture textureRIP;
@@ -151,15 +148,17 @@ int main()
 	spriteAxe.setPosition(700, 830);
 
 	// Line the axe up with the tree
-	const float AXE_POSITION_LEFT = 700;
-	const float AXE_POSITION_RIGHT = 1075;
+	const float AXE_POSITION_TOP = 700;
+	const float AXE_POSITION_BOTTOM = 1075;
 
 	// Prepare the flying log
 	Texture textureLog;
 	textureLog.loadFromFile("graphics/log.png");
 	Sprite spriteLog;
 	spriteLog.setTexture(textureLog);
-	spriteLog.setPosition(810, 720);
+	spriteLog.setPosition(810, 1080 / 2);
+	spriteLog.setOrigin(spriteLog.getLocalBounds().width / 2, spriteLog.getLocalBounds().height / 2);
+	spriteLog.setRotation(90);
 
 	// Some other useful log related variables
 	bool logActive = false;
@@ -238,14 +237,14 @@ int main()
 			if (Keyboard::isKeyPressed(Keyboard::Right)) {
 
 				// Make sure the player is on the right
-				playerSide = side::RIGHT;
+				playerSide = side::BOTTOM;
 
 				score++;
 
 				// Add to the amount of time remaining
 				timeRemaining += (2 / score) + .15;
 
-				spriteAxe.setPosition(AXE_POSITION_RIGHT, spriteAxe.getPosition().y);
+				spriteAxe.setPosition(AXE_POSITION_TOP, spriteAxe.getPosition().y);
 				
 				spritePlayer.setPosition(1200, 720);
 
@@ -268,14 +267,14 @@ int main()
 
 			if (Keyboard::isKeyPressed(Keyboard::Left)) {
 				// Make sure the player is on the left
-				playerSide = side::LEFT;
+				playerSide = side::TOP;
 
 				score++;
 
 				// Add to the amount of time remaining
 				timeRemaining += (2 / score) + .15;
 
-				spriteAxe.setPosition(AXE_POSITION_LEFT, spriteAxe.getPosition().y);
+				spriteAxe.setPosition(AXE_POSITION_BOTTOM, spriteAxe.getPosition().y);
 
 				spritePlayer.setPosition(580, 720);
 
@@ -383,18 +382,18 @@ int main()
 
 				float height = i * 150;
 
-				if (branchPositions[i] == side::LEFT) {
-					// Move the sprite to the left side
-					branches[i].setPosition(610, height);
+				if (branchPositions[i] == side::TOP) {
+					// Move the sprite to the Top side
+					branches[i].setPosition(height, 300);
 
 					// Flip the sprite round the other way
-					branches[i].setRotation(180);
+					branches[i].setRotation(270);
 
 				}
-				else if (branchPositions[i] == side::RIGHT) {
+				else if (branchPositions[i] == side::BOTTOM) {
 					// Move sprite to the right side
-					branches[i].setPosition(1330, height);
-					branches[i].setRotation(0);
+					branches[i].setPosition(height, 800);
+					branches[i].setRotation(90);
 				}
 				else {
 					// Hide the branch
@@ -516,11 +515,11 @@ void updateBranches(int seed) {
 
 	switch (r) {
 	case 0:
-		branchPositions[0] = side::LEFT;
+		branchPositions[0] = side::TOP;
 		break;
 
 	case 1:
-		branchPositions[0] = side::RIGHT;
+		branchPositions[0] = side::BOTTOM;
 		break;
 	default:
 		branchPositions[0] = side::NONE;
