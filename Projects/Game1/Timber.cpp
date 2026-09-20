@@ -5,7 +5,7 @@
 using namespace sf;
 
 // Function declaration
-void updateBranches(int seed);
+void spawnBranches(int seed);
 
 const int NUM_BRANCHES = 6;
 Sprite branches[NUM_BRANCHES];
@@ -79,9 +79,9 @@ int main()
 	timeBar.setFillColor(Color::Red);
 	timeBar.setPosition((1920 / 2) - timeBarStartWidth / 2, 980);
 
-	Time gameTimeTotal;
+	//Time gameTimeTotal;
 	float timeRemaining = 6.0f;
-	float timeBarWidthPerSecond = timeBarStartWidth / timeRemaining;
+	//float timeBarWidthPerSecond = timeBarStartWidth / timeRemaining;
 
 
 	// Track whether the game is running
@@ -216,18 +216,15 @@ int main()
 
 			// Rest the time and the score
 			score = 0;
-			timeRemaining = 6;
+			//timeRemaining = 6;
 
 			// Make all the branches disappear
-			for (int i = 1; i < NUM_BRANCHES; i++) {
-				branchPositions[i] = side::NONE;
-			}
 
 			// Make sure the gravestone is hidden
 			spriteRIP.setPosition(675, 2000);
 
 			// Move the player into position
-			spritePlayer.setPosition(580, 720);
+			spritePlayer.setPosition(1700, 200);
 
 			acceptInput = true;
 		}
@@ -241,17 +238,12 @@ int main()
 				// Make sure the player is on the Bottom
 				playerSide = side::BOTTOM;
 
-				score++;
-
 				// Add to the amount of time remaining
-				timeRemaining += (2 / score) + .15;
+				//timeRemaining += (2 / score) + .15;
 
 				spriteAxe.setPosition(AXE_POSITION_BOTTOM, spriteAxe.getPosition().y);
 				
 				spritePlayer.setPosition(1700, 700);
-
-				// Update the branches
-				updateBranches(score);
 
 				// Set the log flying to the Left
 				spriteLog.setPosition(810, 720);
@@ -271,17 +263,12 @@ int main()
 				// Make sure the player is on the Top
 				playerSide = side::TOP;
 
-				score++;
-
 				// Add to the amount of time remaining
-				timeRemaining += (2 / score) + .15;
+				//timeRemaining += (2 / score) + .15;
 
 				spriteAxe.setPosition(AXE_POSITION_TOP, spriteAxe.getPosition().y);
 
 				spritePlayer.setPosition(1700, 200);
-
-				// update the branches
-				updateBranches(score);
 
 				// set the log flying
 				spriteLog.setPosition(810, 720);
@@ -304,8 +291,8 @@ int main()
 			Time dt = clock.restart();
 
 			// Subtract from the amount of time remaining
-			timeRemaining -= dt.asSeconds();
-			timeBar.setSize(Vector2f(timeBarWidthPerSecond * timeRemaining, timeBarHeight));
+			//timeRemaining -= dt.asSeconds();
+			//timeBar.setSize(Vector2f(timeBarWidthPerSecond * timeRemaining, timeBarHeight));
 
 			// Losing Case
 			if (timeRemaining <= 0.0f) {
@@ -379,14 +366,16 @@ int main()
 			ss << "Score = " << score;
 			scoreText.setString(ss.str());
 
+			spawnBranches(score);
+
 			// Update branch sprites
 			for (int i = 0; i < NUM_BRANCHES; i++) {
 
-				float height = i * 150;
+				float positionX = branches[i].getPosition().x + (BRANCH_SPEED * dt.asSeconds());
 
 				if (branchPositions[i] == side::TOP) {
 					// Move the sprite to the Top side
-					branches[i].setPosition(height, 180);
+					branches[i].setPosition(positionX, 180);
 
 					// Flip the sprite round the other way
 					branches[i].setRotation(270);
@@ -395,13 +384,13 @@ int main()
 				}
 				else if (branchPositions[i] == side::BOTTOM) {
 					// Move sprite to the right side
-					branches[i].setPosition(height, 910);
+					branches[i].setPosition(positionX, 910);
 					branches[i].setRotation(90);
 					branches[i].setScale(1, -1);
 				}
 				else {
 					// Hide the branch
-					branches[i].setPosition(3000, height);
+					branches[i].setPosition(3000, 2000);
 				}
 			}
 
@@ -421,32 +410,36 @@ int main()
 				}
 			}
 
-			// has the player been squished by a branch?
-			if (branchPositions[5] == playerSide) {
-				// death
-				paused = true;
-				acceptInput = false;
+			// Check all branches to see if one is hitting the player
+			for (int i = 0; i < NUM_BRANCHES;i++) {
+				// has the player been squished by a branch?
+				if (branchPositions[i] == playerSide && (1800 > branches[i].getPosition().x && branches[i].getPosition().x > 1650)) {
+					// death
+					paused = true;
+					acceptInput = false;
 
-				// Draw the gravestone
-				spriteRIP.setPosition(525, 760);
+					// Draw the gravestone
+					spriteRIP.setPosition(525, 760);
 
-				// hide the player
-				spritePlayer.setPosition(2000, 660);
+					// hide the player
+					spritePlayer.setPosition(2000, 660);
 
-				// Change the text of the message
-				messageText.setString("SQUISHED!!");
+					// Change the text of the message
+					messageText.setString("SQUISHED!!");
 
-				// Center it on the screen
-				FloatRect textRect = messageText.getLocalBounds();
+					// Center it on the screen
+					FloatRect textRect = messageText.getLocalBounds();
 
-				messageText.setOrigin(textRect.left + textRect.width / 2.0f, textRect.top + textRect.height / 2.0f);
+					messageText.setOrigin(textRect.left + textRect.width / 2.0f, textRect.top + textRect.height / 2.0f);
 
-				messageText.setPosition(1920 / 2.0f, 1080 / 2.0f);
+					messageText.setPosition(1920 / 2.0f, 1080 / 2.0f);
 
-				// Play the death sound
-				death.play();
+					// Play the death sound
+					death.play();
 
+				}
 			}
+			
 
 		} // End if (!paused)
 
@@ -509,26 +502,32 @@ int main()
 }
 
 // Function definition
-void updateBranches(int seed) {
+void spawnBranches(int seed) {
 	// Move all the branches down one place
-	for (int j = NUM_BRANCHES - 1; j > 0; j--) {
-		branchPositions[j] = branchPositions[j - 1];
+	for (int i = 0; i < NUM_BRANCHES; i++) {
+		// If branch went off screen
+		// Respawn it
+		if (branches[i].getPosition().x > 2000) {
+
+			branches[i].setPosition(-100, branches[i].getPosition().y);
+			// Spawn a new branch
+			srand((int)time(0) + seed);
+			int r = (rand() % 5);
+
+			switch (r) {
+			case 0:
+				branchPositions[i] = side::TOP;
+				break;
+
+			case 1:
+				branchPositions[i] = side::BOTTOM;
+				break;
+			default:
+				branchPositions[i] = side::NONE;
+				break;
+			}
+		}
 	}
 
-	// Spawn a new branch at position 0
-	srand((int)time(0) + seed);
-	int r = (rand() % 5);
 
-	switch (r) {
-	case 0:
-		branchPositions[0] = side::TOP;
-		break;
-
-	case 1:
-		branchPositions[0] = side::BOTTOM;
-		break;
-	default:
-		branchPositions[0] = side::NONE;
-		break;
-	}
 }
