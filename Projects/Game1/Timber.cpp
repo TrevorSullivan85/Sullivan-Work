@@ -1,6 +1,7 @@
 // Include important libraries here
 #include <SFML/Graphics.hpp>
 #include <sstream>
+#include <SFML/Audio.hpp>
 using namespace sf;
 
 // Function declaration
@@ -109,21 +110,86 @@ int main()
 		// Set the sprite's origin to dead center
 		branches[i].setOrigin(220, 20);
 	}
-	
 
-	updateBranches(1);
-	updateBranches(2);
-	updateBranches(3);
-	updateBranches(4);
-	updateBranches(5);
+	// Prepare the player
+	Texture texturePlayer;
+	texturePlayer.loadFromFile("graphics/player.png");
+	Sprite spritePlayer;
+	spritePlayer.setTexture(texturePlayer);
+	spritePlayer.setPosition(580, 720);
+
+	// The player starts on the Left
+	side playerSide = side::LEFT;
+
+	// Prepare the gravestone
+	Texture textureRIP;
+	textureRIP.loadFromFile("graphics/rip.png");
+	Sprite spriteRIP;
+	spriteRIP.setTexture(textureRIP);
+	spriteRIP.setPosition(600, 860);
+
+	// Prepare the axe
+	Texture textureAxe;
+	textureAxe.loadFromFile("graphics/axe.png");
+	Sprite spriteAxe;
+	spriteAxe.setTexture(textureAxe);
+	spriteAxe.setPosition(700, 830);
+
+	// Line the axe up with the tree
+	const float AXE_POSITION_LEFT = 700;
+	const float AXE_POSITION_RIGHT = 1075;
+
+	// Prepare the flying log
+	Texture textureLog;
+	textureLog.loadFromFile("graphics/log.png");
+	Sprite spriteLog;
+	spriteLog.setTexture(textureLog);
+	spriteLog.setPosition(810, 720);
+
+	// Some other useful log related variables
+	bool logActive = false;
+	float logSpeedX = 1000;
+	float logSpeedY = -1500;
+
+	// Control player input
+	bool acceptInput = false;
+
+	// Prepare the sound
+	SoundBuffer chopBuffer;
+	chopBuffer.loadFromFile("sound/chop.wav");
+	Sound chop;
+	chop.setBuffer(chopBuffer);
+	SoundBuffer deathBuffer;
+	deathBuffer.loadFromFile("sound/death.wav");
+	Sound death;
+	death.setBuffer(deathBuffer);
+
+	// Out of time
+	SoundBuffer ootBuffer;
+	ootBuffer.loadFromFile("sound/out_of_time.wav");
+	Sound outOfTime;
+	outOfTime.setBuffer(ootBuffer);
 
 
 	while (window.isOpen()) {
-
-
 		/*
 		Check Player Input
 		*/
+
+		Event event;
+
+		while (window.pollEvent(event)) {
+
+			if (event.type == Event::KeyReleased && !paused) {
+
+				// Listen for key presses again
+				acceptInput = true;
+
+				// hide the axe
+				spriteAxe.setPosition(2000, spriteAxe.getPosition().y);
+			}
+		}
+
 		if (Keyboard::isKeyPressed(Keyboard::Escape)) {
 			window.close();
 		}
@@ -135,6 +201,82 @@ int main()
 			// Rest the time and the score
 			score = 0;
 			timeRemaining = 6;
+
+			// Make all the branches disappear
+			for (int i = 1; i < NUM_BRANCHES; i++) {
+				branchPositions[i] = side::NONE;
+			}
+
+			// Make sure the gravestone is hidden
+			spriteRIP.setPosition(675, 2000);
+
+			// Move the player into position
+			spritePlayer.setPosition(580, 720);
+
+			acceptInput = true;
+		}
+
+		// Wrap the player controls to
+		// Make sure we are accepting input
+		if (acceptInput) {
+			// handle pressing right cursor key
+			if (Keyboard::isKeyPressed(Keyboard::Right)) {
+
+				// Make sure the player is on the right
+				playerSide = side::RIGHT;
+
+				score++;
+
+				// Add to the amount of time remaining
+				timeRemaining += (2 / score) + .15;
+
+				spriteAxe.setPosition(AXE_POSITION_RIGHT, spriteAxe.getPosition().y);
+				
+				spritePlayer.setPosition(1200, 720);
+
+				// Update the branches
+				updateBranches(score);
+
+				// Set the log flying to the Left
+				spriteLog.setPosition(810, 720);
+				logSpeedX = -5000;
+				logActive = true;
+
+				acceptInput = false;
+
+				// Play a chop sound
+				chop.play();
+
+			}
+
+			// Handle the left cursor key
+
+			if (Keyboard::isKeyPressed(Keyboard::Left)) {
+				// Make sure the player is on the left
+				playerSide = side::LEFT;
+
+				score++;
+
+				// Add to the amount of time remaining
+				timeRemaining += (2 / score) + .15;
+
+				spriteAxe.setPosition(AXE_POSITION_LEFT, spriteAxe.getPosition().y);
+
+				spritePlayer.setPosition(580, 720);
+
+				// update the branches
+				updateBranches(score);
+
+				// set the log flying
+				spriteLog.setPosition(810, 720);
+				logSpeedX = 5000;
+				logActive = true;
+
+				acceptInput = false;
+
+				// Play a chop sound
+				chop.play();
+			}
 		}
 
 		/*
@@ -287,6 +429,46 @@ int main()
 			}
 
 
+			// Handle a flying log
+			if (logActive) {
+
+				spriteLog.setPosition(spriteLog.getPosition().x + (logSpeedX * dt.asSeconds()), spriteLog.getPosition().y + (logSpeedY * dt.asSeconds()));
+
+				// Has the log reached the right hand edge?
+				if (spriteLog.getPosition().x < -100 || spriteLog.getPosition().x > 2000) {
+					// Set it up ready to be a whole new log next frame
+					logActive = false;
+					spriteLog.setPosition(810, 720);
+				}
+			}
+
+			// has the player been squished by a branch?
+			if (branchPositions[5] == playerSide) {
+				// death
+				paused = true;
+				acceptInput = false;
+
+				// Draw the gravestone
+				spriteRIP.setPosition(525, 760);
+
+				// hide the player
+				spritePlayer.setPosition(2000, 660);
+
+				// Change the text of the message
+				messageText.setString("SQUISHED!!");
+
+				// Center it on the screen
+				FloatRect textRect = messageText.getLocalBounds();
+
+				messageText.setOrigin(textRect.left + textRect.width / 2.0f, textRect.top + textRect.height / 2.0f);
+
+				messageText.setPosition(1920 / 2.0f, 1080 / 2.0f);
+
+				// Play the death sound
+				death.play();
+
+			}
+
 		} // End if (!paused)
 
 
@@ -310,6 +492,18 @@ int main()
 
 		// Draw Tree
 		window.draw(spriteTree);
+
+		// Draw the Player
+		window.draw(spritePlayer);
+
+		// Draw the Axe
+		window.draw(spriteAxe);
+
+		// Draw the flying log
+		window.draw(spriteLog);
+
+		// Draw the gravestone
+		window.draw(spriteRIP);
 
 		// Draw Bee
 		window.draw(spriteBee);
