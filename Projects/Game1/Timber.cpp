@@ -111,6 +111,8 @@ int main()
 	// Prepare 5 branches
 	Texture textureBranch;
 	textureBranch.loadFromFile("graphics/branch.png");
+	int const BRANCH_SPEED = 500;
+
 	// Set the texture for each branch sprite
 	for (int i = 0; i < NUM_BRANCHES; i++) {
 		branches[i].setTexture(textureBranch);
@@ -128,7 +130,7 @@ int main()
 	texturePlayer.loadFromFile("graphics/player.png");
 	Sprite spritePlayer;
 	spritePlayer.setTexture(texturePlayer);
-	spritePlayer.setPosition(580, 720);
+	spritePlayer.setPosition(1700, 200);
 
 	// The player starts on the Left
 	side playerSide = side::TOP;
@@ -234,9 +236,9 @@ int main()
 		// Make sure we are accepting input
 		if (acceptInput) {
 			// handle pressing right cursor key
-			if (Keyboard::isKeyPressed(Keyboard::Right)) {
+			if (Keyboard::isKeyPressed(Keyboard::Down)) {
 
-				// Make sure the player is on the right
+				// Make sure the player is on the Bottom
 				playerSide = side::BOTTOM;
 
 				score++;
@@ -244,9 +246,9 @@ int main()
 				// Add to the amount of time remaining
 				timeRemaining += (2 / score) + .15;
 
-				spriteAxe.setPosition(AXE_POSITION_TOP, spriteAxe.getPosition().y);
+				spriteAxe.setPosition(AXE_POSITION_BOTTOM, spriteAxe.getPosition().y);
 				
-				spritePlayer.setPosition(1200, 720);
+				spritePlayer.setPosition(1700, 700);
 
 				// Update the branches
 				updateBranches(score);
@@ -265,8 +267,8 @@ int main()
 
 			// Handle the left cursor key
 
-			if (Keyboard::isKeyPressed(Keyboard::Left)) {
-				// Make sure the player is on the left
+			if (Keyboard::isKeyPressed(Keyboard::Up)) {
+				// Make sure the player is on the Top
 				playerSide = side::TOP;
 
 				score++;
@@ -274,9 +276,9 @@ int main()
 				// Add to the amount of time remaining
 				timeRemaining += (2 / score) + .15;
 
-				spriteAxe.setPosition(AXE_POSITION_BOTTOM, spriteAxe.getPosition().y);
+				spriteAxe.setPosition(AXE_POSITION_TOP, spriteAxe.getPosition().y);
 
-				spritePlayer.setPosition(580, 720);
+				spritePlayer.setPosition(1700, 200);
 
 				// update the branches
 				updateBranches(score);
@@ -384,16 +386,18 @@ int main()
 
 				if (branchPositions[i] == side::TOP) {
 					// Move the sprite to the Top side
-					branches[i].setPosition(height, 300);
+					branches[i].setPosition(height, 180);
 
 					// Flip the sprite round the other way
 					branches[i].setRotation(270);
+					branches[i].setScale(1, 1);
 
 				}
 				else if (branchPositions[i] == side::BOTTOM) {
 					// Move sprite to the right side
-					branches[i].setPosition(height, 800);
+					branches[i].setPosition(height, 910);
 					branches[i].setRotation(90);
+					branches[i].setScale(1, -1);
 				}
 				else {
 					// Hide the branch
@@ -411,7 +415,9 @@ int main()
 				if (spriteLog.getPosition().x < -100 || spriteLog.getPosition().x > 2000) {
 					// Set it up ready to be a whole new log next frame
 					logActive = false;
-					spriteLog.setPosition(810, 720);
+					spriteLog.setPosition(810, 1080 / 2);
+					spriteLog.setOrigin(spriteLog.getLocalBounds().width / 2, spriteLog.getLocalBounds().height / 2);
+					spriteLog.setRotation(90);
 				}
 			}
 
