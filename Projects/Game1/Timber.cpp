@@ -6,6 +6,7 @@ using namespace sf;
 
 // Function declaration
 void spawnBranches(int seed);
+void setBranches();
 
 const int NUM_BRANCHES = 6;
 Sprite branches[NUM_BRANCHES];
@@ -23,6 +24,9 @@ int main()
 	VideoMode vm(1920, 1080);
 
 	RenderWindow window(vm, "Timber!!!", Style::Fullscreen);
+
+	// Random number centralized
+	srand(time(0));
 
 	// Making the background
 	Texture textureBackground;
@@ -81,6 +85,7 @@ int main()
 
 	//Time gameTimeTotal;
 	float timeRemaining = 6.0f;
+	float timeSurvived = 0.0f;
 	//float timeBarWidthPerSecond = timeBarStartWidth / timeRemaining;
 
 
@@ -112,17 +117,11 @@ int main()
 	Texture textureBranch;
 	textureBranch.loadFromFile("graphics/branch.png");
 	int const BRANCH_SPEED = 500;
+	float const GROWTH_RATE = 20;
 
 	// Set the texture for each branch sprite
 	for (int i = 0; i < NUM_BRANCHES; i++) {
 		branches[i].setTexture(textureBranch);
-		branches[i].setPosition(-2000, -2000);
-
-		// Set the sprite's origin to dead center
-		branches[i].setOrigin(220, 20);
-
-		// Rotate branch for horizontal game
-		branches[i].setRotation(90);
 	}
 
 	// Prepare the player
@@ -211,12 +210,14 @@ int main()
 		}
 
 		// Start Game
-		if (Keyboard::isKeyPressed(Keyboard::Return)) {
+		if (Keyboard::isKeyPressed(Keyboard::Return) && !acceptInput) {
 			paused = false;
 
 			// Rest the time and the score
 			score = 0;
 			//timeRemaining = 6;
+
+			timeSurvived = 0;
 
 			// Make all the branches disappear
 
@@ -225,6 +226,19 @@ int main()
 
 			// Move the player into position
 			spritePlayer.setPosition(1700, 200);
+
+			// Ready Branches
+			for (int i = 0; i < NUM_BRANCHES; i++) {
+				branches[i].setPosition(-2000 - (i * 500), -2000);
+
+				// Set the sprite's origin to dead center
+				branches[i].setOrigin(220, 20);
+
+				// Rotate branch for horizontal game
+				branches[i].setRotation(90);
+			}
+
+			spawnBranches(timeSurvived);
 
 			acceptInput = true;
 		}
@@ -252,6 +266,8 @@ int main()
 
 				acceptInput = false;
 
+				score++;
+
 				// Play a chop sound
 				chop.play();
 
@@ -277,6 +293,8 @@ int main()
 
 				acceptInput = false;
 
+				score++;
+
 				// Play a chop sound
 				chop.play();
 			}
@@ -286,6 +304,7 @@ int main()
 		Update Game
 		*/
 
+
 		if (!paused) {
 			// Measure Time
 			Time dt = clock.restart();
@@ -293,6 +312,9 @@ int main()
 			// Subtract from the amount of time remaining
 			//timeRemaining -= dt.asSeconds();
 			//timeBar.setSize(Vector2f(timeBarWidthPerSecond * timeRemaining, timeBarHeight));
+
+			timeSurvived += dt.asSeconds();
+
 
 			// Losing Case
 			if (timeRemaining <= 0.0f) {
@@ -316,11 +338,9 @@ int main()
 			if (!beeActive) {
 
 				// how fast is bee
-				srand((int)time(0));
 				beeSpeed = (rand() % 200) + 200;
 
 				// How high is the bee
-				srand((int)time(0) * 10);
 				float height = (rand() % 500) + 500;
 				spriteBee.setPosition(2000, height);
 				beeActive = true;
@@ -340,11 +360,9 @@ int main()
 			for (int i = 0; i < NUM_CLOUDS; i++) {
 				if (!cloudsActive[i]) {
 					// how fast is the cloud
-					srand((int)time(0) * 10 * (i + 1));
 					cloudsSpeeds[i] = (rand() % 200);
 
 					// how high is the cloud
-					srand((int)time(0) * 10 * (i + 1));
 					float height = (rand() % 150);
 					clouds[i].setPosition(-200, height);
 					cloudsActive[i] = true;
@@ -366,16 +384,19 @@ int main()
 			ss << "Score = " << score;
 			scoreText.setString(ss.str());
 
-			spawnBranches(score);
+			spawnBranches(timeSurvived);
 
 			// Update branch sprites
 			for (int i = 0; i < NUM_BRANCHES; i++) {
 
-				float positionX = branches[i].getPosition().x + (BRANCH_SPEED * dt.asSeconds());
+
+				// Moving Branches
+				float conveyorSpeed = BRANCH_SPEED + (GROWTH_RATE * timeSurvived);
+				float positionX = branches[i].getPosition().x + (conveyorSpeed * dt.asSeconds());
 
 				if (branchPositions[i] == side::TOP) {
 					// Move the sprite to the Top side
-					branches[i].setPosition(positionX, 180);
+					branches[i].setPosition(branches[i].getPosition().x, 180);
 
 					// Flip the sprite round the other way
 					branches[i].setRotation(270);
@@ -384,14 +405,17 @@ int main()
 				}
 				else if (branchPositions[i] == side::BOTTOM) {
 					// Move sprite to the right side
-					branches[i].setPosition(positionX, 910);
+					branches[i].setPosition(branches[i].getPosition().x, 910);
 					branches[i].setRotation(90);
 					branches[i].setScale(1, -1);
 				}
 				else {
-					// Hide the branch
-					branches[i].setPosition(3000, 2000);
+					// Leave Branch off screen
+					branches[i].setPosition(branches[i].getPosition().x, 3000);
 				}
+				// Move Branches no matter what
+				branches[i].setPosition(positionX, branches[i].getPosition().y);
+
 			}
 
 
@@ -509,10 +533,12 @@ void spawnBranches(int seed) {
 		// Respawn it
 		if (branches[i].getPosition().x > 2000) {
 
-			branches[i].setPosition(-100, branches[i].getPosition().y);
+			// Need to spawn branch behind leftmost branch to ensure equal gap
+			int leftmost = (i + NUM_BRANCHES - 1) % NUM_BRANCHES;
+
+			branches[i].setPosition(branches[leftmost].getPosition().x - 500, branches[i].getPosition().y);
 			// Spawn a new branch
-			srand((int)time(0) + seed);
-			int r = (rand() % 5);
+			int r = (rand() % 2); // No chance for NONE when % 2
 
 			switch (r) {
 			case 0:
@@ -526,8 +552,13 @@ void spawnBranches(int seed) {
 				branchPositions[i] = side::NONE;
 				break;
 			}
+
 		}
 	}
 
+
+}
+
+void setBranches() {
 
 }
