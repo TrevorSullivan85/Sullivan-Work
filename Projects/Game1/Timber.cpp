@@ -141,16 +141,29 @@ int main()
 	spriteRIP.setTexture(textureRIP);
 	spriteRIP.setPosition(600, 860);
 
-	// Prepare the axe
-	Texture textureAxe;
-	textureAxe.loadFromFile("graphics/axe.png");
-	Sprite spriteAxe;
-	spriteAxe.setTexture(textureAxe);
-	spriteAxe.setPosition(700, 830);
+	// Prepare the CHAINSAW!!!!
+	Texture textureSaw, textureBlade;
+	textureSaw.loadFromFile("graphics/saw.png");
+	textureBlade.loadFromFile("graphics/saw-blade.png");
+	Sprite spriteSaw, spriteBlade;
+	spriteSaw.setTexture(textureSaw);
+	spriteBlade.setTexture(textureBlade);
+	// To make the saw blade spin around itself
+	spriteBlade.setOrigin(spriteBlade.getLocalBounds().width / 2, spriteBlade.getLocalBounds().height / 2);
 
-	// Line the axe up with the tree
-	const float AXE_POSITION_TOP = 700;
-	const float AXE_POSITION_BOTTOM = 1075;
+	// Saw transform
+	spriteSaw.setPosition(1675, 575); // Top location 1675, 575 // Bottom location 1875, 500
+	spriteSaw.setRotation(-90);
+	spriteSaw.setScale(4, 4);
+
+	// Blade Transfrom
+	spriteBlade.setPosition(1750, 500); // Top location 1750, 500 // Bottom location 1790, 590
+	spriteBlade.setScale(4, 4);
+
+	// Line the saw up with the tree
+	// y values now
+	const Vector2f SAW_POSITION_TOP = { 1675, 575 };
+	const Vector2f SAW_POSITION_BOTTOM = { 1875, 500 };
 
 	// Prepare the flying log
 	Texture textureLog;
@@ -200,8 +213,8 @@ int main()
 				// Listen for key presses again
 				acceptInput = true;
 
-				// hide the axe
-				spriteAxe.setPosition(2000, spriteAxe.getPosition().y);
+				//// hide the axe
+				//spriteAxe.setPosition(2000, spriteAxe.getPosition().y);
 			}
 		}
 
@@ -215,7 +228,6 @@ int main()
 
 			// Rest the time and the score
 			score = 0;
-			//timeRemaining = 6;
 
 			timeSurvived = 0;
 
@@ -247,15 +259,14 @@ int main()
 		// Make sure we are accepting input
 		if (acceptInput) {
 			// handle pressing right cursor key
-			if (Keyboard::isKeyPressed(Keyboard::Down)) {
+			if (Keyboard::isKeyPressed(Keyboard::Down) && playerSide != side::BOTTOM) {
 
 				// Make sure the player is on the Bottom
 				playerSide = side::BOTTOM;
 
-				// Add to the amount of time remaining
-				//timeRemaining += (2 / score) + .15;
-
-				spriteAxe.setPosition(AXE_POSITION_BOTTOM, spriteAxe.getPosition().y);
+				spriteSaw.setPosition(SAW_POSITION_BOTTOM);
+				spriteSaw.setRotation(90);
+				spriteBlade.setPosition(1790, 590);
 				
 				spritePlayer.setPosition(1700, 700);
 
@@ -275,14 +286,13 @@ int main()
 
 			// Handle the left cursor key
 
-			if (Keyboard::isKeyPressed(Keyboard::Up)) {
+			if (Keyboard::isKeyPressed(Keyboard::Up) && playerSide != side::TOP) {
 				// Make sure the player is on the Top
 				playerSide = side::TOP;
 
-				// Add to the amount of time remaining
-				//timeRemaining += (2 / score) + .15;
-
-				spriteAxe.setPosition(AXE_POSITION_TOP, spriteAxe.getPosition().y);
+				spriteSaw.setPosition(SAW_POSITION_TOP);
+				spriteSaw.setRotation(-90);
+				spriteBlade.setPosition(1750, 500);
 
 				spritePlayer.setPosition(1700, 200);
 
@@ -463,6 +473,11 @@ int main()
 
 				}
 			}
+
+
+			// Make Sawblade spin
+			spriteBlade.rotate(500 * dt.asSeconds());
+
 			
 
 		} // End if (!paused)
@@ -492,8 +507,9 @@ int main()
 		// Draw the Player
 		window.draw(spritePlayer);
 
-		// Draw the Axe
-		window.draw(spriteAxe);
+		// Draw the Saw
+		window.draw(spriteSaw);
+		window.draw(spriteBlade);
 
 		// Draw the flying log
 		window.draw(spriteLog);
@@ -556,9 +572,5 @@ void spawnBranches(int seed) {
 		}
 	}
 
-
-}
-
-void setBranches() {
 
 }
