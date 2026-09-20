@@ -76,17 +76,8 @@ int main()
 	// Clock
 	Clock clock;
 
-	// Time bar
-	RectangleShape timeBar;
-	float timeBarStartWidth = 400, timeBarHeight = 80;
-	timeBar.setSize(Vector2f(timeBarStartWidth, timeBarHeight));
-	timeBar.setFillColor(Color::Red);
-	timeBar.setPosition((1920 / 2) - timeBarStartWidth / 2, 980);
-
-	//Time gameTimeTotal;
-	float timeRemaining = 6.0f;
+	// Time
 	float timeSurvived = 0.0f;
-	//float timeBarWidthPerSecond = timeBarStartWidth / timeRemaining;
 
 
 	// Track whether the game is running
@@ -122,6 +113,7 @@ int main()
 	// Set the texture for each branch sprite
 	for (int i = 0; i < NUM_BRANCHES; i++) {
 		branches[i].setTexture(textureBranch);
+		branches[i].setPosition(-300, -300);
 	}
 
 	// Prepare the player
@@ -139,7 +131,7 @@ int main()
 	textureRIP.loadFromFile("graphics/rip.png");
 	Sprite spriteRIP;
 	spriteRIP.setTexture(textureRIP);
-	spriteRIP.setPosition(600, 860);
+	spriteRIP.setPosition(675, 2000);
 
 	// Prepare the CHAINSAW!!!!
 	Texture textureSaw, textureBlade;
@@ -170,7 +162,7 @@ int main()
 	textureLog.loadFromFile("graphics/log.png");
 	Sprite spriteLog;
 	spriteLog.setTexture(textureLog);
-	spriteLog.setPosition(810, 1080 / 2);
+	spriteLog.setPosition(1775, 1080 / 2);
 	spriteLog.setOrigin(spriteLog.getLocalBounds().width / 2, spriteLog.getLocalBounds().height / 2);
 	spriteLog.setRotation(90);
 
@@ -271,7 +263,7 @@ int main()
 				spritePlayer.setPosition(1700, 700);
 
 				// Set the log flying to the Left
-				spriteLog.setPosition(810, 720);
+				spriteLog.setPosition(1775, 1080 / 2);
 				logSpeedX = -5000;
 				logActive = true;
 
@@ -297,8 +289,8 @@ int main()
 				spritePlayer.setPosition(1700, 200);
 
 				// set the log flying
-				spriteLog.setPosition(810, 720);
-				logSpeedX = 5000;
+				spriteLog.setPosition(1775, 1080 / 2);
+				logSpeedX = -5000;
 				logActive = true;
 
 				acceptInput = false;
@@ -319,29 +311,7 @@ int main()
 			// Measure Time
 			Time dt = clock.restart();
 
-			// Subtract from the amount of time remaining
-			//timeRemaining -= dt.asSeconds();
-			//timeBar.setSize(Vector2f(timeBarWidthPerSecond * timeRemaining, timeBarHeight));
-
 			timeSurvived += dt.asSeconds();
-
-
-			// Losing Case
-			if (timeRemaining <= 0.0f) {
-				// Pause the game
-				paused = true;
-
-				// Change the message shown to the player
-				messageText.setString("Out of time!!");
-
-				// Reposition the text based on its new size
-				FloatRect textRect = messageText.getLocalBounds();
-				messageText.setOrigin(textRect.left + textRect.width / 2.0f, textRect.top + textRect.height / 2.0f);
-				messageText.setPosition(1920 / 2.0f, 1080 / 2.0f);
-
-				// Play out of time sound
-				outOfTime.play();
-			}
 
 
 			// Setup Bee
@@ -438,7 +408,7 @@ int main()
 				if (spriteLog.getPosition().x < -100 || spriteLog.getPosition().x > 2000) {
 					// Set it up ready to be a whole new log next frame
 					logActive = false;
-					spriteLog.setPosition(810, 1080 / 2);
+					spriteLog.setPosition(1775, 1080 / 2);
 					spriteLog.setOrigin(spriteLog.getLocalBounds().width / 2, spriteLog.getLocalBounds().height / 2);
 					spriteLog.setRotation(90);
 				}
@@ -507,24 +477,21 @@ int main()
 		// Draw the Player
 		window.draw(spritePlayer);
 
-		// Draw the Saw
-		window.draw(spriteSaw);
-		window.draw(spriteBlade);
-
 		// Draw the flying log
 		window.draw(spriteLog);
 
 		// Draw the gravestone
 		window.draw(spriteRIP);
 
+		// Draw the Saw
+		window.draw(spriteSaw);
+		window.draw(spriteBlade);
+
 		// Draw Bee
 		window.draw(spriteBee);
 
 		// Draw the score
 		window.draw(scoreText);
-
-		// Draw the timebar
-		window.draw(timeBar);
 		
 		// Draw message
 		if (paused) {
