@@ -7,7 +7,7 @@ using namespace sf;
 // Function declaration
 void spawnAsteroids(int seed);
 
-const int NUM_ASTEROIDS = 8;
+const int NUM_ASTEROIDS = 10;
 Sprite asteroids[NUM_ASTEROIDS];
 
 // Where is the player/branch
@@ -67,6 +67,7 @@ int main()
 	textureAsteroid.loadFromFile("graphics/meteorBrown_big1.png");
 	int const ASTEROID_SPEED = 500;
 	float const GROWTH_RATE = 20;
+	float const SPINNING_SPEED = 250;
 
 
 	// Y locations for the player and the asteroids
@@ -77,7 +78,9 @@ int main()
 	// Set the texture for each asteroid
 	for (int i = 0; i < NUM_ASTEROIDS; i++) {
 		asteroids[i].setTexture(textureAsteroid);
+		asteroids[i].setOrigin(asteroids[i].getLocalBounds().width / 2, asteroids[i].getLocalBounds().height / 2);
 		asteroids[i].setPosition(-300, -300);// Hide
+		asteroids[i].setScale(1.5, 1.5);
 	}
 
 	// Prepare the Ship
@@ -142,12 +145,12 @@ int main()
 
 			timeSurvived = 0;
 
+			// Put player back on screen
+			spritePlayer.setPosition(1700, MIDDLE_Y);
+
 			// Ready Asteroids
 			for (int i = 0; i < NUM_ASTEROIDS; i++) {
-				asteroids[i].setPosition(-2000 - (i * 500), -2000);
-
-				// Set the sprite's origin to dead center
-				asteroids[i].setOrigin(220, 20);
+				asteroids[i].setPosition(-2000 - (i * 350), -2000);
 			}
 
 			spawnAsteroids(timeSurvived);
@@ -158,30 +161,41 @@ int main()
 		// Wrap the player controls to
 		// Make sure we are accepting input
 		if (acceptInput) {
-			// handle pressing right cursor key
+
+			// Player presses up arrow
 			if (Keyboard::isKeyPressed(Keyboard::Down) && playerSide != side::BOTTOM) {
 
-				// Make sure the player is in the middle
-				playerSide = side::MIDDLE;
-
+				// Move the player accordingly
+				if (playerSide == side::MIDDLE) {
+					playerSide = side::BOTTOM;
+					spritePlayer.setPosition(1700, BOTTOM_Y);
+				}
+				else {
+					playerSide = side::MIDDLE;
+					spritePlayer.setPosition(1700, MIDDLE_Y);
+				}
 
 				acceptInput = false;
-
-				score++;
 
 				// Play a fly sound
 				fly.play();
 
 			}
 
-			// Handle the left cursor key
-
+			// Player presses down arrow
 			if (Keyboard::isKeyPressed(Keyboard::Up) && playerSide != side::TOP) {
-				// Make sure the player is on the Top
-				playerSide = side::TOP;
+				// Move the player accordingly
+				if (playerSide == side::MIDDLE) {
+					playerSide = side::TOP;
+					spritePlayer.setPosition(1700, TOP_Y);
+				}
+				else {
+					playerSide = side::MIDDLE;
+					spritePlayer.setPosition(1700, MIDDLE_Y);
+				}
 
 
-				spritePlayer.setPosition(1700, 200);
+				
 
 
 				acceptInput = false;
@@ -222,18 +236,15 @@ int main()
 
 				if (branchPositions[i] == side::TOP) {
 					// Move the sprite to the Top side
-					asteroids[i].setPosition(asteroids[i].getPosition().x, 180);
-
-					// Flip the sprite round the other way
-					asteroids[i].setRotation(270);
-					asteroids[i].setScale(1, 1);
-
+					asteroids[i].setPosition(asteroids[i].getPosition().x, TOP_Y);
+				}
+				else if (branchPositions[i] == side::MIDDLE) {
+					// Move sprite to the Middle
+					asteroids[i].setPosition(asteroids[i].getPosition().x, MIDDLE_Y);
 				}
 				else if (branchPositions[i] == side::BOTTOM) {
-					// Move sprite to the right side
-					asteroids[i].setPosition(asteroids[i].getPosition().x, 910);
-					asteroids[i].setRotation(90);
-					asteroids[i].setScale(1, -1);
+					// Move sprite to the bottom
+					asteroids[i].setPosition(asteroids[i].getPosition().x, BOTTOM_Y);
 				}
 				else {
 					// Leave Branch off screen
@@ -241,6 +252,7 @@ int main()
 				}
 				// Move Branches no matter what
 				asteroids[i].setPosition(positionX, asteroids[i].getPosition().y);
+				asteroids[i].rotate(SPINNING_SPEED * dt.asSeconds());
 
 			}
 
@@ -321,7 +333,7 @@ void spawnAsteroids(int seed) {
 			// Need to spawn branch behind leftmost branch to ensure equal gap
 			int leftmost = (i + NUM_ASTEROIDS - 1) % NUM_ASTEROIDS;
 
-			asteroids[i].setPosition(asteroids[leftmost].getPosition().x - 500, asteroids[i].getPosition().y);
+			asteroids[i].setPosition(asteroids[leftmost].getPosition().x - 350, asteroids[i].getPosition().y);
 			// Spawn a new branch
 			int r = (rand() % 3); // No chance for NONE when % 3
 
