@@ -10,12 +10,11 @@ void spawnAsteroids(int seed);
 const int NUM_ASTEROIDS = 10;
 Sprite asteroids[NUM_ASTEROIDS];
 
-// Where is the player/branch
+// Where is the player/asteroid
 // Top or Bottom
 enum class side { TOP, BOTTOM, MIDDLE, NONE};
 
-side branchPositions[NUM_ASTEROIDS];
-float branchXPositions[NUM_ASTEROIDS];
+side asteroidPositions[NUM_ASTEROIDS];
 
 // this is where our game starts from
 int main()
@@ -34,6 +33,20 @@ int main()
 	spriteBackground.setTexture(textureBackground);
 	spriteBackground.setPosition(0, 0);
 
+	// Making ability Bar
+	//Rect abilityBar;
+	float abilityCharge = 0;
+	bool slowTime = false;
+	float const DRAIN_RATE = 3;
+	bool isHolding = false;
+
+	// Ability bar
+	RectangleShape abilityBar;
+	float abilityBarStartWidth = 0, abilityBarHeight = 80;
+	abilityBar.setSize(Vector2f(abilityBarStartWidth, abilityBarHeight));
+	abilityBar.setFillColor(Color::Red);
+	abilityBar.setPosition((1920 / 2) - 500 / 2, 980);
+
 
 	// Clock
 	Clock clock;
@@ -45,10 +58,10 @@ int main()
 	bool paused = true;
 
 	// Draw some text
-	int score = 0;
+	float score = 0;
 	Text messageText, scoreText;
 	Font font;
-	font.loadFromFile("fonts/KOMIKAP_.ttf");
+	font.loadFromFile("fonts/StarShieldV2-9M52K.ttf");
 	messageText.setFont(font);
 	scoreText.setFont(font);
 	messageText.setString("Press Enter to start!");
@@ -61,6 +74,8 @@ int main()
 	messageText.setOrigin(textRect.left + textRect.width / 2.0f, textRect.top + textRect.height / 2.0f);
 	messageText.setPosition(1920 / 2.0f, 1080 / 2.0f);
 	scoreText.setPosition(20, 20);
+
+
 
 	// TODO: Prepare Asteroids
 	Texture textureAsteroid;
@@ -145,6 +160,9 @@ int main()
 
 			timeSurvived = 0;
 
+			// Reset ability
+			abilityCharge = 0;
+
 			// Put player back on screen
 			spritePlayer.setPosition(1700, MIDDLE_Y);
 
@@ -158,11 +176,29 @@ int main()
 			acceptInput = true;
 		}
 
+		// Keep outside acceptInput to be able to hold
+		if (Keyboard::isKeyPressed(Keyboard::Space) && (abilityCharge >= 10 || isHolding)) {
+			slowTime = true;
+
+			// Handle if ability is 0
+			if (abilityCharge <= 0) {
+				isHolding = false;
+			}
+			else {
+				isHolding = true;
+			}
+
+		}
+		else {
+			isHolding = false;
+			slowTime = false;
+		}
+
 		// Wrap the player controls to
 		// Make sure we are accepting input
 		if (acceptInput) {
 
-			// Player presses up arrow
+			// Player presses down arrow
 			if (Keyboard::isKeyPressed(Keyboard::Down) && playerSide != side::BOTTOM) {
 
 				// Move the player accordingly
@@ -182,7 +218,7 @@ int main()
 
 			}
 
-			// Player presses down arrow
+			// Player presses up arrow
 			if (Keyboard::isKeyPressed(Keyboard::Up) && playerSide != side::TOP) {
 				// Move the player accordingly
 				if (playerSide == side::MIDDLE) {
@@ -194,18 +230,13 @@ int main()
 					spritePlayer.setPosition(1700, MIDDLE_Y);
 				}
 
-
-				
-
-
 				acceptInput = false;
-
-				score++;
 
 				// Play a fly sound
 				fly.play();
 			}
-		}
+
+		} // End if (acceptInput)
 
 		/*
 		Update Game
@@ -217,40 +248,65 @@ int main()
 			Time dt = clock.restart();
 
 			timeSurvived += dt.asSeconds();
+			float conveyorSpeed = ASTEROID_SPEED + (GROWTH_RATE * timeSurvived);
+
+
+			// Slow down time
+			if (slowTime && isHolding) {
+				conveyorSpeed = conveyorSpeed / 2;
+				// Lose ability charge
+				abilityCharge -= dt.asSeconds() * DRAIN_RATE;
+				abilityBar.setFillColor(Color::Yellow);
+			}
+
+			// Charge Ablility
+			if (abilityCharge < 10 && slowTime == false) {
+				abilityCharge += dt.asSeconds();
+				abilityBar.setFillColor(Color::Red);
+			}
+			// Make sure ability charge is exactly 10 when charged
+			else if (slowTime == false) {
+				abilityCharge = 10;
+				abilityBar.setFillColor(Color::Green);
+			}
+
+			// Ability bar
+			abilityBar.setSize(Vector2f(abilityCharge * 50, abilityBarHeight));
 
 
 			// Update the score text
 			std::stringstream ss;
-			ss << "Score = " << score;
+			ss << "Score = " << (int)score;
 			scoreText.setString(ss.str());
 
 			spawnAsteroids(timeSurvived);
 
-			// Update branch sprites
+
+			// Update asteroid sprites
 			for (int i = 0; i < NUM_ASTEROIDS; i++) {
 
 
-				// Moving Branches
-				float conveyorSpeed = ASTEROID_SPEED + (GROWTH_RATE * timeSurvived);
+				// Moving Asteroids
+				
 				float positionX = asteroids[i].getPosition().x + (conveyorSpeed * dt.asSeconds());
 
-				if (branchPositions[i] == side::TOP) {
+				if (asteroidPositions[i] == side::TOP) {
 					// Move the sprite to the Top side
 					asteroids[i].setPosition(asteroids[i].getPosition().x, TOP_Y);
 				}
-				else if (branchPositions[i] == side::MIDDLE) {
+				else if (asteroidPositions[i] == side::MIDDLE) {
 					// Move sprite to the Middle
 					asteroids[i].setPosition(asteroids[i].getPosition().x, MIDDLE_Y);
 				}
-				else if (branchPositions[i] == side::BOTTOM) {
+				else if (asteroidPositions[i] == side::BOTTOM) {
 					// Move sprite to the bottom
 					asteroids[i].setPosition(asteroids[i].getPosition().x, BOTTOM_Y);
 				}
 				else {
-					// Leave Branch off screen
+					// Leave Asteroid off screen
 					asteroids[i].setPosition(asteroids[i].getPosition().x, 3000);
 				}
-				// Move Branches no matter what
+				// Move Asteroids no matter what
 				asteroids[i].setPosition(positionX, asteroids[i].getPosition().y);
 				asteroids[i].rotate(SPINNING_SPEED * dt.asSeconds());
 
@@ -258,8 +314,8 @@ int main()
 
 			// Check all asteroids to see if one is hitting the player
 			for (int i = 0; i < NUM_ASTEROIDS;i++) {
-				// has the player been squished by a branch?
-				if (branchPositions[i] == playerSide && (1800 > asteroids[i].getPosition().x && asteroids[i].getPosition().x > 1650)) {
+				// has the player been squished by a asteroid?
+				if (asteroidPositions[i] == playerSide && (1800 > asteroids[i].getPosition().x && asteroids[i].getPosition().x > 1650)) {
 					// death
 					paused = true;
 					acceptInput = false;
@@ -283,7 +339,11 @@ int main()
 				}
 			}
 
-			
+			// Increment the score (Ramps up with speed of asteroids)
+			score += ((conveyorSpeed / 700) * dt.asSeconds());
+
+
+
 
 		} // End if (!paused)
 
@@ -306,6 +366,9 @@ int main()
 
 		// Draw the score
 		window.draw(scoreText);
+
+		// Draw the bar
+		window.draw(abilityBar);
 		
 		// Draw message
 		if (paused) {
@@ -326,31 +389,31 @@ int main()
 void spawnAsteroids(int seed) {
 	// Move all the asteroids down one place
 	for (int i = 0; i < NUM_ASTEROIDS; i++) {
-		// If branch went off screen
+		// If asteroid went off screen
 		// Respawn it
 		if (asteroids[i].getPosition().x > 2000) {
 
-			// Need to spawn branch behind leftmost branch to ensure equal gap
+			// Need to spawn asteroid behind leftmost asteroid to ensure equal gap
 			int leftmost = (i + NUM_ASTEROIDS - 1) % NUM_ASTEROIDS;
 
 			asteroids[i].setPosition(asteroids[leftmost].getPosition().x - 350, asteroids[i].getPosition().y);
-			// Spawn a new branch
+			// Spawn a new asteroid
 			int r = (rand() % 3); // No chance for NONE when % 3
 
 			switch (r) {
 			case 0:
-				branchPositions[i] = side::TOP;
+				asteroidPositions[i] = side::TOP;
 				break;
 
 			case 1:
-				branchPositions[i] = side::MIDDLE;
+				asteroidPositions[i] = side::MIDDLE;
 				break;
 
 			case 2:
-				branchPositions[i] = side::BOTTOM;
+				asteroidPositions[i] = side::BOTTOM;
 				break;
 			default:
-				branchPositions[i] = side::NONE;
+				asteroidPositions[i] = side::NONE;
 				break;
 			}
 
