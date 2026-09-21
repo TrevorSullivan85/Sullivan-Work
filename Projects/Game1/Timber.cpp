@@ -5,18 +5,17 @@
 using namespace sf;
 
 // Function declaration
-void spawnBranches(int seed);
-void setBranches();
+void spawnAsteroids(int seed);
 
-const int NUM_BRANCHES = 6;
-Sprite branches[NUM_BRANCHES];
+const int NUM_ASTEROIDS = 8;
+Sprite asteroids[NUM_ASTEROIDS];
 
 // Where is the player/branch
 // Top or Bottom
-enum class side { TOP, BOTTOM, NONE};
+enum class side { TOP, BOTTOM, MIDDLE, NONE};
 
-side branchPositions[NUM_BRANCHES];
-float branchXPositions[NUM_BRANCHES];
+side branchPositions[NUM_ASTEROIDS];
+float branchXPositions[NUM_ASTEROIDS];
 
 // this is where our game starts from
 int main()
@@ -28,49 +27,12 @@ int main()
 	// Random number centralized
 	srand(time(0));
 
-	// Making the background
+	// Making the Space background
 	Texture textureBackground;
-	textureBackground.loadFromFile("graphics/background.png");
+	textureBackground.loadFromFile("graphics/black.png");
 	Sprite spriteBackground;
 	spriteBackground.setTexture(textureBackground);
 	spriteBackground.setPosition(0, 0);
-
-	// Making the tree
-	Texture textureTree;
-	textureTree.loadFromFile("graphics/tree.png");
-	Sprite spriteTree;
-	spriteTree.setTexture(textureTree);
-	spriteTree.setOrigin(spriteTree.getLocalBounds().width / 2, spriteTree.getLocalBounds().height / 2);
-	spriteTree.setPosition(1920 / 2, 1080 / 2);
-	spriteTree.setRotation(90);
-	spriteTree.setScale(1, 3);
-
-
-	// Making the bee
-	Texture textureBee;
-	textureBee.loadFromFile("graphics/bee.png");
-	Sprite spriteBee;
-	spriteBee.setTexture(textureBee);
-	spriteBee.setPosition(0, 800);
-	bool beeActive = false;
-	float beeSpeed = 0.0f;
-
-	// Making 3 clouds
-
-	const int NUM_CLOUDS = 3;
-	Sprite clouds[NUM_CLOUDS];
-	Texture textureCloud;
-	textureCloud.loadFromFile("graphics/cloud.png");
-	bool cloudsActive[NUM_CLOUDS];
-	float cloudsSpeeds[NUM_CLOUDS];
-
-	for (int i = 0; i < NUM_CLOUDS; i++) {
-		clouds[i].setTexture(textureCloud);
-		clouds[i].setPosition(-300, (i + 1) * 150);
-		cloudsActive[i] = false;
-		cloudsSpeeds[i] = 0;
-	}
-
 
 
 	// Clock
@@ -79,11 +41,8 @@ int main()
 	// Time
 	float timeSurvived = 0.0f;
 
-
 	// Track whether the game is running
 	bool paused = true;
-
-
 
 	// Draw some text
 	int score = 0;
@@ -100,85 +59,48 @@ int main()
 	scoreText.setFillColor(Color::White);
 	FloatRect textRect = messageText.getLocalBounds();
 	messageText.setOrigin(textRect.left + textRect.width / 2.0f, textRect.top + textRect.height / 2.0f);
-
 	messageText.setPosition(1920 / 2.0f, 1080 / 2.0f);
 	scoreText.setPosition(20, 20);
 
-	// Prepare 5 branches
-	Texture textureBranch;
-	textureBranch.loadFromFile("graphics/branch.png");
-	int const BRANCH_SPEED = 500;
+	// TODO: Prepare Asteroids
+	Texture textureAsteroid;
+	textureAsteroid.loadFromFile("graphics/meteorBrown_big1.png");
+	int const ASTEROID_SPEED = 500;
 	float const GROWTH_RATE = 20;
 
-	// Set the texture for each branch sprite
-	for (int i = 0; i < NUM_BRANCHES; i++) {
-		branches[i].setTexture(textureBranch);
-		branches[i].setPosition(-300, -300);
+
+	// Y locations for the player and the asteroids
+	float const TOP_Y = 180;
+	float const MIDDLE_Y = 545;
+	float const BOTTOM_Y = 910;
+
+	// Set the texture for each asteroid
+	for (int i = 0; i < NUM_ASTEROIDS; i++) {
+		asteroids[i].setTexture(textureAsteroid);
+		asteroids[i].setPosition(-300, -300);// Hide
 	}
 
-	// Prepare the player
+	// Prepare the Ship
 	Texture texturePlayer;
-	texturePlayer.loadFromFile("graphics/player.png");
+	texturePlayer.loadFromFile("graphics/playerShip1_blue.png");
 	Sprite spritePlayer;
 	spritePlayer.setTexture(texturePlayer);
-	spritePlayer.setPosition(1700, 200);
+	spritePlayer.setOrigin(spritePlayer.getLocalBounds().width / 2, spritePlayer.getLocalBounds().height / 2);
+	spritePlayer.setPosition(1700, MIDDLE_Y);
+	spritePlayer.setScale(1.5, 1.5);
+	spritePlayer.setRotation(-90);
 
-	// The player starts on the Left
-	side playerSide = side::TOP;
-
-	// Prepare the gravestone
-	Texture textureRIP;
-	textureRIP.loadFromFile("graphics/rip.png");
-	Sprite spriteRIP;
-	spriteRIP.setTexture(textureRIP);
-	spriteRIP.setPosition(675, 2000);
-
-	// Prepare the CHAINSAW!!!!
-	Texture textureSaw, textureBlade;
-	textureSaw.loadFromFile("graphics/saw.png");
-	textureBlade.loadFromFile("graphics/saw-blade.png");
-	Sprite spriteSaw, spriteBlade;
-	spriteSaw.setTexture(textureSaw);
-	spriteBlade.setTexture(textureBlade);
-	// To make the saw blade spin around itself
-	spriteBlade.setOrigin(spriteBlade.getLocalBounds().width / 2, spriteBlade.getLocalBounds().height / 2);
-
-	// Saw transform
-	spriteSaw.setPosition(1675, 575); // Top location 1675, 575 // Bottom location 1875, 500
-	spriteSaw.setRotation(-90);
-	spriteSaw.setScale(4, 4);
-
-	// Blade Transfrom
-	spriteBlade.setPosition(1750, 500); // Top location 1750, 500 // Bottom location 1790, 590
-	spriteBlade.setScale(4, 4);
-
-	// Line the saw up with the tree
-	// y values now
-	const Vector2f SAW_POSITION_TOP = { 1675, 575 };
-	const Vector2f SAW_POSITION_BOTTOM = { 1875, 500 };
-
-	// Prepare the flying log
-	Texture textureLog;
-	textureLog.loadFromFile("graphics/log.png");
-	Sprite spriteLog;
-	spriteLog.setTexture(textureLog);
-	spriteLog.setPosition(1775, 1080 / 2);
-	spriteLog.setOrigin(spriteLog.getLocalBounds().width / 2, spriteLog.getLocalBounds().height / 2);
-	spriteLog.setRotation(90);
-
-	// Some other useful log related variables
-	bool logActive = false;
-	float logSpeedX = 1000;
-	float logSpeedY = -1500;
+	// The player starts on the MIDDLE
+	side playerSide = side::MIDDLE;
 
 	// Control player input
 	bool acceptInput = false;
 
 	// Prepare the sound
 	SoundBuffer chopBuffer;
-	chopBuffer.loadFromFile("sound/chop.wav");
-	Sound chop;
-	chop.setBuffer(chopBuffer);
+	chopBuffer.loadFromFile("sound/fly.wav");
+	Sound fly;
+	fly.setBuffer(chopBuffer);
 	SoundBuffer deathBuffer;
 	deathBuffer.loadFromFile("sound/death.wav");
 	Sound death;
@@ -204,9 +126,6 @@ int main()
 
 				// Listen for key presses again
 				acceptInput = true;
-
-				//// hide the axe
-				//spriteAxe.setPosition(2000, spriteAxe.getPosition().y);
 			}
 		}
 
@@ -223,26 +142,15 @@ int main()
 
 			timeSurvived = 0;
 
-			// Make all the branches disappear
-
-			// Make sure the gravestone is hidden
-			spriteRIP.setPosition(675, 2000);
-
-			// Move the player into position
-			spritePlayer.setPosition(1700, 200);
-
-			// Ready Branches
-			for (int i = 0; i < NUM_BRANCHES; i++) {
-				branches[i].setPosition(-2000 - (i * 500), -2000);
+			// Ready Asteroids
+			for (int i = 0; i < NUM_ASTEROIDS; i++) {
+				asteroids[i].setPosition(-2000 - (i * 500), -2000);
 
 				// Set the sprite's origin to dead center
-				branches[i].setOrigin(220, 20);
-
-				// Rotate branch for horizontal game
-				branches[i].setRotation(90);
+				asteroids[i].setOrigin(220, 20);
 			}
 
-			spawnBranches(timeSurvived);
+			spawnAsteroids(timeSurvived);
 
 			acceptInput = true;
 		}
@@ -253,26 +161,16 @@ int main()
 			// handle pressing right cursor key
 			if (Keyboard::isKeyPressed(Keyboard::Down) && playerSide != side::BOTTOM) {
 
-				// Make sure the player is on the Bottom
-				playerSide = side::BOTTOM;
+				// Make sure the player is in the middle
+				playerSide = side::MIDDLE;
 
-				spriteSaw.setPosition(SAW_POSITION_BOTTOM);
-				spriteSaw.setRotation(90);
-				spriteBlade.setPosition(1790, 590);
-				
-				spritePlayer.setPosition(1700, 700);
-
-				// Set the log flying to the Left
-				spriteLog.setPosition(1775, 1080 / 2);
-				logSpeedX = -5000;
-				logActive = true;
 
 				acceptInput = false;
 
 				score++;
 
-				// Play a chop sound
-				chop.play();
+				// Play a fly sound
+				fly.play();
 
 			}
 
@@ -282,23 +180,16 @@ int main()
 				// Make sure the player is on the Top
 				playerSide = side::TOP;
 
-				spriteSaw.setPosition(SAW_POSITION_TOP);
-				spriteSaw.setRotation(-90);
-				spriteBlade.setPosition(1750, 500);
 
 				spritePlayer.setPosition(1700, 200);
 
-				// set the log flying
-				spriteLog.setPosition(1775, 1080 / 2);
-				logSpeedX = -5000;
-				logActive = true;
 
 				acceptInput = false;
 
 				score++;
 
-				// Play a chop sound
-				chop.play();
+				// Play a fly sound
+				fly.play();
 			}
 		}
 
@@ -314,116 +205,52 @@ int main()
 			timeSurvived += dt.asSeconds();
 
 
-			// Setup Bee
-			if (!beeActive) {
-
-				// how fast is bee
-				beeSpeed = (rand() % 200) + 200;
-
-				// How high is the bee
-				float height = (rand() % 500) + 500;
-				spriteBee.setPosition(2000, height);
-				beeActive = true;
-			}
-			else // Move the bee 
-			{
-
-				spriteBee.setPosition(spriteBee.getPosition().x - (beeSpeed * dt.asSeconds()), spriteBee.getPosition().y);
-
-				if (spriteBee.getPosition().x < -100) {
-					beeActive = false;
-				}
-
-			}
-
-			// Manage the Clouds
-			for (int i = 0; i < NUM_CLOUDS; i++) {
-				if (!cloudsActive[i]) {
-					// how fast is the cloud
-					cloudsSpeeds[i] = (rand() % 200);
-
-					// how high is the cloud
-					float height = (rand() % 150);
-					clouds[i].setPosition(-200, height);
-					cloudsActive[i] = true;
-				}
-				else {
-					clouds[i].setPosition(clouds[i].getPosition().x + (cloudsSpeeds[i] * dt.asSeconds()), clouds[i].getPosition().y);
-
-					// Has the cloud reached the right hand side of the screen
-					if (clouds[i].getPosition().x > 1920) {
-						// Set it up ready to be a whole new cloud
-						cloudsActive[i] = false;
-					}
-				}
-			}
-
-
 			// Update the score text
 			std::stringstream ss;
 			ss << "Score = " << score;
 			scoreText.setString(ss.str());
 
-			spawnBranches(timeSurvived);
+			spawnAsteroids(timeSurvived);
 
 			// Update branch sprites
-			for (int i = 0; i < NUM_BRANCHES; i++) {
+			for (int i = 0; i < NUM_ASTEROIDS; i++) {
 
 
 				// Moving Branches
-				float conveyorSpeed = BRANCH_SPEED + (GROWTH_RATE * timeSurvived);
-				float positionX = branches[i].getPosition().x + (conveyorSpeed * dt.asSeconds());
+				float conveyorSpeed = ASTEROID_SPEED + (GROWTH_RATE * timeSurvived);
+				float positionX = asteroids[i].getPosition().x + (conveyorSpeed * dt.asSeconds());
 
 				if (branchPositions[i] == side::TOP) {
 					// Move the sprite to the Top side
-					branches[i].setPosition(branches[i].getPosition().x, 180);
+					asteroids[i].setPosition(asteroids[i].getPosition().x, 180);
 
 					// Flip the sprite round the other way
-					branches[i].setRotation(270);
-					branches[i].setScale(1, 1);
+					asteroids[i].setRotation(270);
+					asteroids[i].setScale(1, 1);
 
 				}
 				else if (branchPositions[i] == side::BOTTOM) {
 					// Move sprite to the right side
-					branches[i].setPosition(branches[i].getPosition().x, 910);
-					branches[i].setRotation(90);
-					branches[i].setScale(1, -1);
+					asteroids[i].setPosition(asteroids[i].getPosition().x, 910);
+					asteroids[i].setRotation(90);
+					asteroids[i].setScale(1, -1);
 				}
 				else {
 					// Leave Branch off screen
-					branches[i].setPosition(branches[i].getPosition().x, 3000);
+					asteroids[i].setPosition(asteroids[i].getPosition().x, 3000);
 				}
 				// Move Branches no matter what
-				branches[i].setPosition(positionX, branches[i].getPosition().y);
+				asteroids[i].setPosition(positionX, asteroids[i].getPosition().y);
 
 			}
 
-
-			// Handle a flying log
-			if (logActive) {
-
-				spriteLog.setPosition(spriteLog.getPosition().x + (logSpeedX * dt.asSeconds()), spriteLog.getPosition().y + (logSpeedY * dt.asSeconds()));
-
-				// Has the log reached the right hand edge?
-				if (spriteLog.getPosition().x < -100 || spriteLog.getPosition().x > 2000) {
-					// Set it up ready to be a whole new log next frame
-					logActive = false;
-					spriteLog.setPosition(1775, 1080 / 2);
-					spriteLog.setOrigin(spriteLog.getLocalBounds().width / 2, spriteLog.getLocalBounds().height / 2);
-					spriteLog.setRotation(90);
-				}
-			}
-
-			// Check all branches to see if one is hitting the player
-			for (int i = 0; i < NUM_BRANCHES;i++) {
+			// Check all asteroids to see if one is hitting the player
+			for (int i = 0; i < NUM_ASTEROIDS;i++) {
 				// has the player been squished by a branch?
-				if (branchPositions[i] == playerSide && (1800 > branches[i].getPosition().x && branches[i].getPosition().x > 1650)) {
+				if (branchPositions[i] == playerSide && (1800 > asteroids[i].getPosition().x && asteroids[i].getPosition().x > 1650)) {
 					// death
 					paused = true;
 					acceptInput = false;
-
-					// Draw the gravestone
-					spriteRIP.setPosition(525, 760);
 
 					// hide the player
 					spritePlayer.setPosition(2000, 660);
@@ -444,10 +271,6 @@ int main()
 				}
 			}
 
-
-			// Make Sawblade spin
-			spriteBlade.rotate(500 * dt.asSeconds());
-
 			
 
 		} // End if (!paused)
@@ -461,34 +284,13 @@ int main()
 		// Draw BG
 		window.draw(spriteBackground);
 
-		// Draw Clouds
-		for (int i = 0; i < NUM_CLOUDS; i++) {
-			window.draw(clouds[i]);
+		// Draw Asteroids
+		for (int i = 0; i < NUM_ASTEROIDS; i++) {
+			window.draw(asteroids[i]);
 		}
-
-		// Draw Branches
-		for (int i = 0; i < NUM_BRANCHES; i++) {
-			window.draw(branches[i]);
-		}
-
-		// Draw Tree
-		window.draw(spriteTree);
 
 		// Draw the Player
 		window.draw(spritePlayer);
-
-		// Draw the flying log
-		window.draw(spriteLog);
-
-		// Draw the gravestone
-		window.draw(spriteRIP);
-
-		// Draw the Saw
-		window.draw(spriteSaw);
-		window.draw(spriteBlade);
-
-		// Draw Bee
-		window.draw(spriteBee);
 
 		// Draw the score
 		window.draw(scoreText);
@@ -509,19 +311,19 @@ int main()
 }
 
 // Function definition
-void spawnBranches(int seed) {
-	// Move all the branches down one place
-	for (int i = 0; i < NUM_BRANCHES; i++) {
+void spawnAsteroids(int seed) {
+	// Move all the asteroids down one place
+	for (int i = 0; i < NUM_ASTEROIDS; i++) {
 		// If branch went off screen
 		// Respawn it
-		if (branches[i].getPosition().x > 2000) {
+		if (asteroids[i].getPosition().x > 2000) {
 
 			// Need to spawn branch behind leftmost branch to ensure equal gap
-			int leftmost = (i + NUM_BRANCHES - 1) % NUM_BRANCHES;
+			int leftmost = (i + NUM_ASTEROIDS - 1) % NUM_ASTEROIDS;
 
-			branches[i].setPosition(branches[leftmost].getPosition().x - 500, branches[i].getPosition().y);
+			asteroids[i].setPosition(asteroids[leftmost].getPosition().x - 500, asteroids[i].getPosition().y);
 			// Spawn a new branch
-			int r = (rand() % 2); // No chance for NONE when % 2
+			int r = (rand() % 3); // No chance for NONE when % 3
 
 			switch (r) {
 			case 0:
@@ -529,6 +331,10 @@ void spawnBranches(int seed) {
 				break;
 
 			case 1:
+				branchPositions[i] = side::MIDDLE;
+				break;
+
+			case 2:
 				branchPositions[i] = side::BOTTOM;
 				break;
 			default:
