@@ -11,7 +11,7 @@ const int NUM_ASTEROIDS = 10;
 Sprite asteroids[NUM_ASTEROIDS];
 
 // Where is the player/asteroid
-// Top or Bottom
+// Top, Bottom, or Middle
 enum class side { TOP, BOTTOM, MIDDLE, NONE};
 
 side asteroidPositions[NUM_ASTEROIDS];
@@ -21,7 +21,7 @@ int main()
 {
 	VideoMode vm(1920, 1080);
 
-	RenderWindow window(vm, "Timber!!!", Style::Fullscreen);
+	RenderWindow window(vm, "Asteroids", Style::Fullscreen);
 
 	// Random number centralized
 	srand(time(0));
@@ -32,6 +32,7 @@ int main()
 	Sprite spriteBackground;
 	spriteBackground.setTexture(textureBackground);
 	spriteBackground.setPosition(0, 0);
+	spriteBackground.setScale(10, 10);
 
 	// Making ability Bar
 	//Rect abilityBar;
@@ -115,27 +116,22 @@ int main()
 	bool acceptInput = false;
 
 	// Prepare the sound
-	SoundBuffer chopBuffer;
-	chopBuffer.loadFromFile("sound/fly.wav");
+	SoundBuffer flyBuffer;
+	flyBuffer.loadFromFile("sound/thrusterFire_003.mp3");
 	Sound fly;
-	fly.setBuffer(chopBuffer);
+	fly.setBuffer(flyBuffer);
 	SoundBuffer deathBuffer;
-	deathBuffer.loadFromFile("sound/death.wav");
+	deathBuffer.loadFromFile("sound/explosionCrunch_001.ogg");
 	Sound death;
 	death.setBuffer(deathBuffer);
 
-	// Out of time
-	SoundBuffer ootBuffer;
-	ootBuffer.loadFromFile("sound/out_of_time.wav");
-	Sound outOfTime;
-	outOfTime.setBuffer(ootBuffer);
-
 
 	while (window.isOpen()) {
-		/*
-		Check Player Input
-		*/
 
+
+		/**********************
+		   Check Player Input
+		 **********************/
 		Event event;
 
 		while (window.pollEvent(event)) {
@@ -171,7 +167,7 @@ int main()
 				asteroids[i].setPosition(-2000 - (i * 350), -2000);
 			}
 
-			spawnAsteroids(timeSurvived);
+			spawnAsteroids();
 
 			acceptInput = true;
 		}
@@ -238,10 +234,12 @@ int main()
 
 		} // End if (acceptInput)
 
-		/*
-		Update Game
-		*/
 
+
+
+		/**********************
+		      Update Game
+		 **********************/
 
 		if (!paused) {
 			// Measure Time
@@ -279,7 +277,7 @@ int main()
 			ss << "Score = " << (int)score;
 			scoreText.setString(ss.str());
 
-			spawnAsteroids(timeSurvived);
+			spawnAsteroids();
 
 
 			// Update asteroid sprites
@@ -324,7 +322,7 @@ int main()
 					spritePlayer.setPosition(2000, 660);
 
 					// Change the text of the message
-					messageText.setString("SQUISHED!!");
+					messageText.setString("You Died!!");
 
 					// Center it on the screen
 					FloatRect textRect = messageText.getLocalBounds();
@@ -348,9 +346,11 @@ int main()
 		} // End if (!paused)
 
 
-		/*
-		Draw the scene
-		*/
+
+
+		/**********************
+			  Draw Scene
+		 **********************/
 		window.clear();
 
 		// Draw BG
@@ -386,7 +386,7 @@ int main()
 }
 
 // Function definition
-void spawnAsteroids(int seed) {
+void spawnAsteroids() {
 	// Move all the asteroids down one place
 	for (int i = 0; i < NUM_ASTEROIDS; i++) {
 		// If asteroid went off screen
