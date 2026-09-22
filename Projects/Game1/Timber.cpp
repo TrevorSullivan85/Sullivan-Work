@@ -5,7 +5,7 @@
 using namespace sf;
 
 // Function declaration
-void spawnAsteroids(int seed);
+void spawnAsteroids();
 
 const int NUM_ASTEROIDS = 10;
 Sprite asteroids[NUM_ASTEROIDS];
